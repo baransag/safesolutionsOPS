@@ -90,9 +90,9 @@ const regenerateOfficeQr = asyncHandler(async (req, res) => {
 // POST /api/qr/verify  (any authenticated user — employees use this when scanning)
 // Body: { value: "<scanned QR text>" }
 const verifyOfficeQr = asyncHandler(async (req, res) => {
-  const { value } = req.body;
+  const value = req.body.value || req.body.code;
   if (!value || typeof value !== "string") {
-    throw new ApiError(400, "value is required.");
+    throw new ApiError(400, "value or code is required.");
   }
 
   const record = await OfficeQrModel.get();

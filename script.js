@@ -187,6 +187,37 @@ const API = {
       console.error("API request failed", path, e);
       return { success: false, message: "Unable to reach server." };
     }
+
+    if (res.status === 401 && !options._retry && path !== "/auth/login" && path !== "/auth/refresh") {
+      options._retry = true;
+      const refreshToken = Storage.get(Storage.keys.REFRESH_TOKEN);
+      if (refreshToken) {
+        try {
+          const refreshRes = await fetch(CONFIG.API_BASE + "/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken })
+          });
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            const newAccessToken = refreshData.accessToken || (refreshData.data && refreshData.data.accessToken);
+            if (newAccessToken) {
+              Storage.setToken(newAccessToken);
+              headers["Authorization"] = "Bearer " + newAccessToken;
+              res = await fetch(CONFIG.API_BASE + path, { ...options, headers, body });
+            }
+          } else {
+            Storage.removeToken();
+            Storage.remove(Storage.keys.SESSION);
+            Storage.remove(Storage.keys.REFRESH_TOKEN);
+            window.location.reload();
+          }
+        } catch (err) {
+          console.error("Error refreshing token", err);
+        }
+      }
+    }
+
     let data = null;
     try { data = await res.json(); } catch (e) { data = null; }
     if (!res.ok) {

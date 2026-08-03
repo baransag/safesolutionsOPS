@@ -28,7 +28,14 @@ const stats = asyncHandler(async (req, res) => {
       absentToday:      Math.max(employees.length - presentIds.size, 0),
       pendingApprovals: pending.length
     },
-    recentActivity: todayRecords.slice(0, 10)
+    recentActivity: todayRecords.slice(0, 10).map((r) => ({
+      ...r,
+      employeeId:      r.employee_id,
+      employeeName:    r.employee_name,
+      checkIn:         r.check_in,
+      checkOut:        r.check_out,
+      approvalStatus:  r.approval_status
+    }))
   });
 });
 

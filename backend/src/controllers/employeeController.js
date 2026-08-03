@@ -5,6 +5,7 @@ const AuditModel    = require("../models/auditModel");
 const asyncHandler  = require("../utils/asyncHandler");
 const { ApiError }  = require("../middleware/errorHandler");
 const env           = require("../config/env");
+const { saveBase64Image } = require("../utils/uploadHelper");
 
 // GET /api/employees
 const list = asyncHandler(async (req, res) => {
@@ -28,7 +29,11 @@ const create = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Phone or email is required to create a login.");
   }
 
-  if (req.file) data.image = `employees/${req.file.filename}`;
+  if (req.file) {
+    data.image = `employees/${req.file.filename}`;
+  } else if (data.image && data.image.startsWith("data:image/")) {
+    data.image = saveBase64Image(data.image, "employees");
+  }
   if (!data.code) data.code = await EmployeeModel.nextCode(data.phone);
 
   const employee = await EmployeeModel.create(data);
@@ -57,7 +62,11 @@ const create = asyncHandler(async (req, res) => {
 // PUT /api/employees/:id  (Controller/Boss only)
 const update = asyncHandler(async (req, res) => {
   const data = { ...req.body };
-  if (req.file) data.image = `employees/${req.file.filename}`;
+  if (req.file) {
+    data.image = `employees/${req.file.filename}`;
+  } else if (data.image && data.image.startsWith("data:image/")) {
+    data.image = saveBase64Image(data.image, "employees");
+  }
 
   const employee = await EmployeeModel.update(req.params.id, data);
   if (!employee) throw new ApiError(404, "Employee not found.");
@@ -95,7 +104,11 @@ const updateOwnProfile = asyncHandler(async (req, res) => {
   allowed.forEach((k) => {
     if (req.body[k] !== undefined) data[k] = req.body[k];
   });
-  if (req.file) data.image = `employees/${req.file.filename}`;
+  if (req.file) {
+    data.image = `employees/${req.file.filename}`;
+  } else if (req.body.image && req.body.image.startsWith("data:image/")) {
+    data.image = saveBase64Image(req.body.image, "employees");
+  }
 
   const employee = await EmployeeModel.update(req.user.employeeId, data);
   if (!employee) throw new ApiError(404, "Employee not found.");

@@ -5,6 +5,7 @@ const AuditModel        = require("../models/auditModel");
 const asyncHandler      = require("../utils/asyncHandler");
 const { ApiError }      = require("../middleware/errorHandler");
 const { distanceMeters } = require("../utils/geo");
+const { saveBase64Image } = require("../utils/uploadHelper");
 
 function todayStr() {
   // Returns YYYY-MM-DD in the server's local timezone.
@@ -17,11 +18,31 @@ function timeNow() {
   return new Date().toTimeString().slice(0, 8);
 }
 
+function formatAttendanceRecord(r) {
+  if (!r) return r;
+  return {
+    ...r,
+    employeeId:      r.employee_id,
+    employeeName:    r.employee_name,
+    checkIn:         r.check_in,
+    checkOut:        r.check_out,
+    gpsAccuracy:     r.gps_accuracy,
+    withinGeofence:  r.within_geofence,
+    selfiePath:      r.selfie_path,
+    sitePhotoPath:   r.site_photo_path,
+    approvalStatus:  r.approval_status,
+    approvedBy:      r.approved_by,
+    qrVerified:      r.qr_verified,
+    createdAt:       r.created_at,
+    updatedAt:       r.updated_at
+  };
+}
+
 // GET /api/attendance
 // Filters: employeeId, date, type, status, approvalStatus, fromDate, toDate
 const list = asyncHandler(async (req, res) => {
   const records = await AttendanceModel.findAll(req.query);
-  res.json({ success: true, records });
+  res.json({ success: true, records: records.map(formatAttendanceRecord) });
 });
 
 // GET /api/attendance/status/today?employeeId=&type=
@@ -32,14 +53,14 @@ const todayStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "employeeId and type are required.");
   }
   const record = await AttendanceModel.findOpenForToday(employeeId, type, todayStr());
-  res.json({ success: true, record: record || null });
+  res.json({ success: true, record: formatAttendanceRecord(record) || null });
 });
 
 // GET /api/attendance/:id
 const getOne = asyncHandler(async (req, res) => {
   const record = await AttendanceModel.findById(req.params.id);
   if (!record) throw new ApiError(404, "Attendance record not found.");
-  res.json({ success: true, record });
+  res.json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 // POST /api/attendance/check-in
@@ -72,7 +93,10 @@ const checkIn = asyncHandler(async (req, res) => {
   }
 
   // Store the relative path so /uploads/<path> resolves via the static server.
-  const selfiePath = req.file ? `selfies/${req.file.filename}` : null;
+  let selfiePath = req.file ? `selfies/${req.file.filename}` : null;
+  if (!selfiePath && req.body.selfie) {
+    selfiePath = saveBase64Image(req.body.selfie, "selfies");
+  }
 
   const record = await AttendanceModel.create({
     employeeId,
@@ -92,7 +116,7 @@ const checkIn = asyncHandler(async (req, res) => {
   });
 
   await NotificationModel.push(`${employeeName} checked in (${type}).`);
-  res.status(201).json({ success: true, record });
+  res.status(201).json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 // POST /api/attendance/check-out
@@ -111,27 +135,31 @@ const checkOut = asyncHandler(async (req, res) => {
   if (existing.check_out)  throw new ApiError(409, "Already checked out.");
 
   const updateData = { checkOut: timeNow() };
-  if (req.file)        updateData.sitePhotoPath = `site/${req.file.filename}`;
+  if (req.file) {
+    updateData.sitePhotoPath = `site/${req.file.filename}`;
+  } else if (req.body.sitePhoto) {
+    updateData.sitePhotoPath = saveBase64Image(req.body.sitePhoto, "site");
+  }
   if (latitude != null)  updateData.latitude   = parseFloat(latitude);
   if (longitude != null) updateData.longitude  = parseFloat(longitude);
 
   const record = await AttendanceModel.update(existing.id, updateData);
   await NotificationModel.push(`${existing.employee_name} checked out (${type}).`);
-  res.json({ success: true, record });
+  res.json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 // POST /api/attendance  (manual create — Manager/Controller/Boss)
 const create = asyncHandler(async (req, res) => {
   const record = await AttendanceModel.create(req.body);
   await NotificationModel.push(`${record.employee_name} - ${record.type} attendance recorded.`);
-  res.status(201).json({ success: true, record });
+  res.status(201).json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 // PUT /api/attendance/:id
 const update = asyncHandler(async (req, res) => {
   const record = await AttendanceModel.update(req.params.id, req.body);
   if (!record) throw new ApiError(404, "Attendance record not found.");
-  res.json({ success: true, record });
+  res.json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 // DELETE /api/attendance/:id
@@ -151,7 +179,7 @@ const approve = asyncHandler(async (req, res) => {
 
   await NotificationModel.push(`Attendance for ${record.employee_name} approved.`);
   await AuditModel.log(req.user.userId, "APPROVE_ATTENDANCE", "attendance", record.id);
-  res.json({ success: true, record });
+  res.json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 // POST /api/attendance/:id/reject
@@ -168,7 +196,7 @@ const reject = asyncHandler(async (req, res) => {
   await AuditModel.log(
     req.user.userId, "REJECT_ATTENDANCE", "attendance", record.id, { reason }
   );
-  res.json({ success: true, record });
+  res.json({ success: true, record: formatAttendanceRecord(record) });
 });
 
 module.exports = {

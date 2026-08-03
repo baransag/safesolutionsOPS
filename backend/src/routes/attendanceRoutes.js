@@ -27,6 +27,8 @@ router.put(   "/:id", requireRole("Manager", "Controller", "Boss"), ctrl.update)
 router.delete("/:id", requireRole("Controller", "Boss"),            ctrl.remove);
 
 router.post("/:id/approve", requireRole("Manager", "Controller", "Boss"), ctrl.approve);
+router.put("/:id/approve", requireRole("Manager", "Controller", "Boss"), ctrl.approve);
 router.post("/:id/reject",  requireRole("Manager", "Controller", "Boss"), ctrl.reject);
+router.put("/:id/reject",  requireRole("Manager", "Controller", "Boss"), ctrl.reject);
 
 module.exports = router;
