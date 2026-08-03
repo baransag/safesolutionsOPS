@@ -1,0 +1,9 @@
+node_modules/
+.env
+uploads/employees/*
+uploads/selfies/*
+uploads/site/*
+!uploads/employees/.gitkeep
+!uploads/selfies/.gitkeep
+!uploads/site/.gitkeep
+npm-debug.log*

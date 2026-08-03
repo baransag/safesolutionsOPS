@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safe Solutions Smart Attendance System</title>
+<link rel="icon" type="image/jpeg" href="assets/images/logo.jpeg">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ==================== TOAST CONTAINER ==================== -->
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer" style="z-index: 9999;"></div>
+
+<!-- ==================== LOGIN VIEW ==================== -->
+<section id="loginView" class="view login-view">
+  <div class="login-bg-glow"></div>
+  <div class="login-wrapper">
+    <div class="login-card glass-panel">
+      <div class="login-logo-wrap">
+        <img src="assets/images/logo.jpeg" alt="Safe Solutions Logo" id="loginLogo" class="login-logo">
+      </div>
+      <h1 class="login-title">Safe Solutions</h1>
+      <p class="login-subtitle">Smart Attendance System</p>
+
+      <form id="loginForm" class="login-form">
+        <div class="form-floating mb-3 premium-field">
+          <input type="text" class="form-control" id="loginUsername" placeholder="Username" required>
+          <label for="loginUsername"><i class="bi bi-person-fill me-2"></i>Username</label>
+        </div>
+        <div class="form-floating mb-3 premium-field">
+          <input type="password" class="form-control" id="loginPassword" placeholder="Password" required>
+          <label for="loginPassword"><i class="bi bi-lock-fill me-2"></i>Password</label>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-4 login-options">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="rememberMe">
+            <label class="form-check-label" for="rememberMe">Remember me</label>
+          </div>
+          <a href="#" id="forgotPasswordLink" class="forgot-link">Forgot password?</a>
+        </div>
+        <div id="loginError" class="login-error d-none">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i><span id="loginErrorText">Invalid credentials</span>
+        </div>
+        <button type="button" id="loginBtn" class="btn premium-btn w-100">
+          <span class="btn-label">Sign In</span>
+          <i class="bi bi-arrow-right-circle ms-2"></i>
+        </button>
+      </form>
+    </div>
+    <p class="login-footer-text">&copy; 2026 Safe Solutions. All rights reserved.</p>
+  </div>
+</section>
+
+<!-- ==================== APP SHELL ==================== -->
+<div id="appShell" class="app-shell d-none">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-brand">
+      <img src="assets/images/logo.jpeg" alt="Logo" class="sidebar-logo">
+      <div class="sidebar-brand-text">
+        <span class="brand-name">Safe Solutions</span>
+        <span class="brand-sub">Attendance System</span>
+      </div>
+      <button class="sidebar-toggle-btn d-lg-none" id="sidebarCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      <a href="#" class="sidebar-link active" data-target="dashboardView" id="navDashboard">
+        <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="employeeView" id="navEmployee">
+        <i class="bi bi-people-fill"></i><span>Employee Management</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="officeAttendanceView" id="navOfficeAttendance">
+        <i class="bi bi-building-fill"></i><span>Office Attendance</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="siteAttendanceView" id="navSiteAttendance">
+        <i class="bi bi-geo-alt-fill"></i><span>Site Attendance</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="historyView" id="navHistory">
+        <i class="bi bi-clock-history"></i><span>Attendance History</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="approvalView" id="navApprovals">
+        <i class="bi bi-check2-square"></i><span>Approvals</span>
+        <span class="badge sidebar-badge" id="approvalBadge">0</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="reportsView" id="navReports">
+        <i class="bi bi-bar-chart-fill"></i><span>Reports</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="profileView" id="navProfile">
+        <i class="bi bi-person-circle"></i><span>Profile</span>
+      </a>
+      <a href="#" class="sidebar-link" data-target="settingsView" id="navSettings">
+        <i class="bi bi-gear-fill"></i><span>Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn logout-btn w-100" id="logoutBtn">
+        <i class="bi bi-box-arrow-right me-2"></i>Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay d-none" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- NAVBAR -->
+    <header id="navbar" class="topbar">
+      <button class="menu-toggle-btn d-lg-none" id="menuToggleBtn"><i class="bi bi-list"></i></button>
+
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" id="searchEmployee" class="search-input" placeholder="Search employees...">
+      </div>
+
+      <div class="topbar-right">
+        <button class="icon-btn" id="themeToggleBtn"><i class="bi bi-moon-stars-fill"></i></button>
+
+        <div class="notification-wrap">
+          <button class="icon-btn" id="notificationBell">
+            <i class="bi bi-bell-fill"></i>
+            <span class="notif-dot" id="notifDot"></span>
+          </button>
+          <div class="notification-dropdown d-none" id="notificationDropdown">
+            <div class="notif-header">Notifications</div>
+            <div class="notif-list" id="notifList"></div>
+          </div>
+        </div>
+
+        <div class="user-dropdown-wrap">
+          <button class="user-chip" id="userDropdown">
+            <img src="assets/images/ENGR_SHAHZAIB_AHMAD.jpeg" alt="User" class="user-avatar" id="topbarUserAvatar" onerror="this.onerror=null;this.src='assets/images/logo.jpeg'">
+            <span class="user-chip-name" id="topbarUserName">Shahzaib Ahmad</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <div class="user-dropdown-menu d-none" id="userDropdownMenu">
+            <a href="#" class="dropdown-item-custom" data-target="profileView" id="ddProfileLink"><i class="bi bi-person me-2"></i>Profile</a>
+            <a href="#" class="dropdown-item-custom" data-target="settingsView" id="ddSettingsLink"><i class="bi bi-gear me-2"></i>Settings</a>
+            <a href="#" class="dropdown-item-custom text-danger" id="ddLogoutLink"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- VIEWS CONTAINER -->
+    <main class="views-container" id="viewsContainer">
+
+      <!-- ==================== DASHBOARD VIEW ==================== -->
+      <section id="dashboardView" class="view app-view">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Dashboard</h2>
+            <p class="view-subtitle">Welcome back, overview of today's activity</p>
+          </div>
+          <div class="view-header-actions">
+            <span class="date-chip" id="dashboardDateChip"><i class="bi bi-calendar3 me-2"></i>--</span>
+          </div>
+        </div>
+
+        <!-- HERO SLIDER -->
+        <div id="heroSlider" class="hero-slider">
+          <div class="hero-slide-track" id="heroSlideTrack">
+            <div class="hero-slide active"><img src="assets/images/hero-1.jpeg" alt="Hero 1"></div>
+            <div class="hero-slide"><img src="assets/images/hero-2.jpeg" alt="Hero 2"></div>
+            <div class="hero-slide"><img src="assets/images/hero-3.jpeg" alt="Hero 3"></div>
+            <div class="hero-slide"><img src="assets/images/hero-4.jpeg" alt="Hero 4"></div>
+            <div class="hero-slide"><img src="assets/images/hero-5.jpeg" alt="Hero 5"></div>
+          </div>
+          <button class="hero-nav-btn hero-prev" id="heroPrevBtn"><i class="bi bi-chevron-left"></i></button>
+          <button class="hero-nav-btn hero-next" id="heroNextBtn"><i class="bi bi-chevron-right"></i></button>
+          <div class="hero-dots" id="heroDots">
+            <span class="hero-dot active" data-slide="0"></span>
+            <span class="hero-dot" data-slide="1"></span>
+            <span class="hero-dot" data-slide="2"></span>
+            <span class="hero-dot" data-slide="3"></span>
+            <span class="hero-dot" data-slide="4"></span>
+          </div>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="row g-3 stat-cards-row">
+          <div class="col-6 col-lg-3">
+            <div class="stat-card glass-panel" id="statCardTotalEmployees">
+              <div class="stat-icon-wrap bg-purple"><i class="bi bi-people-fill"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="statTotalEmployees">0</span>
+                <span class="stat-label">Total Employees</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card glass-panel" id="statCardPresentToday">
+              <div class="stat-icon-wrap bg-cyan"><i class="bi bi-person-check-fill"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="statPresentToday">0</span>
+                <span class="stat-label">Present Today</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card glass-panel" id="statCardAbsentToday">
+              <div class="stat-icon-wrap bg-pink"><i class="bi bi-person-x-fill"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="statAbsentToday">0</span>
+                <span class="stat-label">Absent Today</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card glass-panel" id="statCardPendingApprovals">
+              <div class="stat-icon-wrap bg-soft"><i class="bi bi-hourglass-split"></i></div>
+              <div class="stat-info">
+                <span class="stat-value" id="statPendingApprovals">0</span>
+                <span class="stat-label">Pending Approvals</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="row g-3 mt-1">
+          <div class="col-lg-8">
+            <div class="chart-card glass-panel">
+              <div class="chart-card-header">
+                <h5>Weekly Attendance Overview</h5>
+              </div>
+              <div id="weeklyAttendanceChart" class="chart-container"></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="chart-card glass-panel">
+              <div class="chart-card-header">
+                <h5>Attendance Ratio</h5>
+              </div>
+              <div id="attendanceRatioChart" class="chart-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div class="row g-3 mt-1">
+          <div class="col-12">
+            <div class="table-card glass-panel">
+              <div class="table-card-header">
+                <h5>Recent Activity</h5>
+              </div>
+              <div class="table-responsive">
+                <table class="premium-table" id="recentActivityTable">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentActivityTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== EMPLOYEE MANAGEMENT VIEW ==================== -->
+      <section id="employeeView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Employee Management</h2>
+            <p class="view-subtitle">Manage your organization's workforce</p>
+          </div>
+          <div class="view-header-actions">
+            <button class="btn premium-btn" id="addEmployeeBtn"><i class="bi bi-person-plus-fill me-2"></i>Add Employee</button>
+          </div>
+        </div>
+
+        <div class="row g-3" id="employeeCardsGrid">
+          <!-- employee cards injected here -->
+        </div>
+
+        <div class="table-card glass-panel mt-3">
+          <div class="table-card-header">
+            <h5>All Employees</h5>
+            <div class="table-header-tools">
+              <select class="form-select premium-select" id="employeeFilterDept">
+                <option value="">All Departments</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="premium-table" id="employeeTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Photo</th>
+                  <th>Name</th>
+                  <th>Designation</th>
+                  <th>Department</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="employeeTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== OFFICE ATTENDANCE VIEW ==================== -->
+      <section id="officeAttendanceView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Office Attendance</h2>
+            <p class="view-subtitle">Scan the permanent office QR to check in or out — GPS verified</p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <!-- LEFT COLUMN: CLOCK + ACTIONS -->
+          <div class="col-lg-4">
+            <div class="attendance-action-card glass-panel">
+              <div class="attendance-clock" id="officeClock">--:--:--</div>
+              <p class="attendance-date" id="officeDateDisplay">--</p>
+
+              <div class="office-status-grid">
+                <div class="office-status-chip" id="officeGpsChip">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <div>
+                    <span class="ocs-label">GPS</span>
+                    <span class="ocs-value" id="officeGpsValue">Not Verified</span>
+                  </div>
+                </div>
+                <div class="office-status-chip" id="officeDistanceChip">
+                  <i class="bi bi-signpost-split-fill"></i>
+                  <div>
+                    <span class="ocs-label">Distance</span>
+                    <span class="ocs-value" id="officeDistanceValue">--</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2 mt-3">
+                <button class="btn premium-btn ripple-btn" id="officeScanCheckInBtn"><i class="bi bi-qr-code-scan me-2"></i>Scan QR &amp; Check In</button>
+                <button class="btn outline-btn ripple-btn" id="officeScanCheckOutBtn"><i class="bi bi-box-arrow-right me-2"></i>Scan QR &amp; Check Out</button>
+              </div>
+
+              <div class="attendance-status-badge" id="officeAttendanceStatus">Not Checked In</div>
+
+              <div class="office-mini-metrics">
+                <div class="omm-item">
+                  <span class="omm-label">Check In</span>
+                  <span class="omm-value" id="officeTodayCheckIn">--:--</span>
+                </div>
+                <div class="omm-item">
+                  <span class="omm-label">Check Out</span>
+                  <span class="omm-value" id="officeTodayCheckOut">--:--</span>
+                </div>
+                <div class="omm-item">
+                  <span class="omm-label">Working Hrs</span>
+                  <span class="omm-value" id="officeWorkingHours">0.0h</span>
+                </div>
+              </div>
+
+              <div class="approval-status-strip" id="officeApprovalStrip">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Manager Approval: <strong id="officeApprovalText">—</strong></span>
+              </div>
+            </div>
+
+            <!-- OFFICE QR PREVIEW CARD (Controller / Boss only) -->
+            <div class="qr-preview-card glass-panel mt-3" id="officeQrPreviewCard">
+              <div class="qr-preview-header">
+                <h6><i class="bi bi-qr-code me-2"></i>Office QR Code</h6>
+                <span class="qr-code-tag">SAFE-SOLUTIONS-HQ-001</span>
+              </div>
+              <div class="qr-preview-image-wrap" id="officeQrImageWrap">
+                <div id="officeQrCanvas" class="qr-canvas-box"></div>
+              </div>
+              <div class="qr-preview-actions">
+                <button class="btn outline-btn btn-sm-premium" id="officeQrViewBtn"><i class="bi bi-arrows-fullscreen"></i> View</button>
+                <button class="btn outline-btn btn-sm-premium" id="officeQrDownloadBtn"><i class="bi bi-download"></i> Download</button>
+                <button class="btn outline-btn btn-sm-premium" id="officeQrPrintBtn"><i class="bi bi-printer-fill"></i> Print</button>
+                <button class="btn reject-btn btn-sm-premium" id="officeQrRegenerateBtn"><i class="bi bi-arrow-repeat"></i> Regenerate</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: STATS + TIMELINE + TABLE -->
+          <div class="col-lg-8">
+            <div class="row g-3">
+              <div class="col-6 col-md-3">
+                <div class="mini-stat-card glass-panel">
+                  <span class="mini-stat-value" id="officePresentCount">0</span>
+                  <span class="mini-stat-label">Present</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="mini-stat-card glass-panel">
+                  <span class="mini-stat-value" id="officeAbsentCount">0</span>
+                  <span class="mini-stat-label">Absent</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="mini-stat-card glass-panel">
+                  <span class="mini-stat-value" id="officeLateCount">0</span>
+                  <span class="mini-stat-label">Late</span>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="mini-stat-card glass-panel">
+                  <span class="mini-stat-value" id="officeOnLeaveCount">0</span>
+                  <span class="mini-stat-label">On Leave</span>
+                </div>
+              </div>
+
+              <!-- TODAY'S TIMELINE -->
+              <div class="col-12">
+                <div class="table-card glass-panel">
+                  <div class="table-card-header">
+                    <h5><i class="bi bi-activity me-2"></i>Today's Activity Timeline</h5>
+                  </div>
+                  <div class="attendance-timeline" id="officeTimeline">
+                    <div class="timeline-empty">No activity recorded yet today.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="table-card glass-panel">
+                  <div class="table-card-header">
+                    <h5>Today's Office Attendance</h5>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="premium-table" id="officeAttendanceTable">
+                      <thead>
+                        <tr>
+                          <th>Employee</th>
+                          <th>Check In</th>
+                          <th>Check Out</th>
+                          <th>Status</th>
+                          <th>Approval</th>
+                        </tr>
+                      </thead>
+                      <tbody id="officeAttendanceTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SITE ATTENDANCE VIEW ==================== -->
+      <section id="siteAttendanceView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Site Attendance</h2>
+            <p class="view-subtitle">Select project, scan site QR, verify GPS, capture selfie &amp; site photo</p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="attendance-action-card glass-panel">
+              <div class="attendance-clock" id="siteClock">--:--:--</div>
+              <p class="attendance-date" id="siteDateDisplay">--</p>
+
+              <div class="form-floating premium-field mb-2">
+                <select class="form-select" id="siteLocationSelect">
+                  <option value="">Select Project</option>
+                </select>
+                <label for="siteLocationSelect">Project / Site</label>
+              </div>
+              <div class="form-floating premium-field mb-3">
+                <input type="text" class="form-control" id="siteProjectCodeDisplay" placeholder="Project Code" readonly>
+                <label for="siteProjectCodeDisplay">Project Code</label>
+              </div>
+
+              <div class="office-status-grid">
+                <div class="office-status-chip" id="siteGpsChip">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <div>
+                    <span class="ocs-label">GPS</span>
+                    <span class="ocs-value" id="siteGpsValue">Not Verified</span>
+                  </div>
+                </div>
+                <div class="office-status-chip" id="siteSelfieChip">
+                  <i class="bi bi-camera-fill"></i>
+                  <div>
+                    <span class="ocs-label">Selfie</span>
+                    <span class="ocs-value" id="siteSelfieValue">Pending</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="site-map-placeholder" id="siteMapPreview">
+                <i class="bi bi-map-fill"></i>
+                <span>Live GPS Map Preview</span>
+              </div>
+
+              <div class="d-grid gap-2 mt-3">
+                <button class="btn premium-btn ripple-btn" id="siteScanCheckInBtn"><i class="bi bi-qr-code-scan me-2"></i>Scan Site QR &amp; Check In</button>
+                <button class="btn outline-btn ripple-btn" id="siteScanCheckOutBtn"><i class="bi bi-box-arrow-right me-2"></i>Scan Site QR &amp; Check Out</button>
+              </div>
+
+              <div class="attendance-status-badge" id="siteAttendanceStatus">Not Checked In</div>
+
+              <div class="office-mini-metrics">
+                <div class="omm-item">
+                  <span class="omm-label">Completed</span>
+                  <span class="omm-value" id="siteCompletedVisits">0</span>
+                </div>
+                <div class="omm-item">
+                  <span class="omm-label">Pending</span>
+                  <span class="omm-value" id="sitePendingVisits">0</span>
+                </div>
+                <div class="omm-item">
+                  <span class="omm-label">Distance</span>
+                  <span class="omm-value" id="siteDistanceValue">--</span>
+                </div>
+              </div>
+
+              <div class="approval-status-strip" id="siteApprovalStrip">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Manager: <strong id="siteManagerApprovalText">—</strong> &nbsp;|&nbsp; Controller: <strong id="siteControllerApprovalText">—</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-8">
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="table-card glass-panel">
+                  <div class="table-card-header">
+                    <h5><i class="bi bi-activity me-2"></i>Today's Site Timeline</h5>
+                  </div>
+                  <div class="attendance-timeline" id="siteTimeline">
+                    <div class="timeline-empty">No site activity recorded yet today.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="table-card glass-panel">
+                  <div class="table-card-header">
+                    <h5>Today's Site Attendance</h5>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="premium-table" id="siteAttendanceTable">
+                      <thead>
+                        <tr>
+                          <th>Employee</th>
+                          <th>Site</th>
+                          <th>Check In</th>
+                          <th>Check Out</th>
+                          <th>Status</th>
+                          <th>Approval</th>
+                        </tr>
+                      </thead>
+                      <tbody id="siteAttendanceTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== ATTENDANCE HISTORY VIEW ==================== -->
+      <section id="historyView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Attendance History</h2>
+            <p class="view-subtitle">Browse past attendance records</p>
+          </div>
+        </div>
+
+        <div class="filter-bar glass-panel">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+              <label class="filter-label">Employee</label>
+              <select class="form-select premium-select" id="historyEmployeeFilter">
+                <option value="">All Employees</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="filter-label">Type</label>
+              <select class="form-select premium-select" id="historyTypeFilter">
+                <option value="">All</option>
+                <option value="office">Office</option>
+                <option value="site">Site</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="filter-label">From</label>
+              <input type="date" class="form-control premium-select" id="historyFromDate">
+            </div>
+            <div class="col-md-2">
+              <label class="filter-label">To</label>
+              <input type="date" class="form-control premium-select" id="historyToDate">
+            </div>
+            <div class="col-md-2">
+              <button class="btn premium-btn w-100" id="historyFilterBtn"><i class="bi bi-funnel-fill me-2"></i>Filter</button>
+            </div>
+            <div class="col-md-1">
+              <button class="btn outline-btn w-100" id="historyExportBtn"><i class="bi bi-download"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card glass-panel mt-3">
+          <div class="table-responsive">
+            <table class="premium-table" id="attendanceTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Employee</th>
+                  <th>Type</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Hours</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== APPROVALS VIEW ==================== -->
+      <section id="approvalView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Approvals</h2>
+            <p class="view-subtitle">Review and act on pending requests</p>
+          </div>
+        </div>
+
+        <div class="row g-3" id="approvalCardsGrid"></div>
+
+        <div class="table-card glass-panel mt-3">
+          <div class="table-card-header">
+            <h5>Pending Requests</h5>
+          </div>
+          <div class="table-responsive">
+            <table class="premium-table" id="approvalTable">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Request Type</th>
+                  <th>Date</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="approvalTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== REPORTS VIEW ==================== -->
+      <section id="reportsView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Reports</h2>
+            <p class="view-subtitle">Analytics and exportable reports</p>
+          </div>
+          <div class="view-header-actions">
+            <button class="btn outline-btn" id="reportExportPdfBtn"><i class="bi bi-file-earmark-pdf-fill me-2"></i>Export PDF</button>
+            <button class="btn premium-btn" id="reportExportExcelBtn"><i class="bi bi-file-earmark-excel-fill me-2"></i>Export Excel</button>
+          </div>
+        </div>
+
+        <div class="filter-bar glass-panel">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="filter-label">Report Type</label>
+              <select class="form-select premium-select" id="reportTypeSelect">
+                <option value="monthly">Monthly Summary</option>
+                <option value="employee">Employee-wise</option>
+                <option value="department">Department-wise</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="filter-label">Month</label>
+              <input type="month" class="form-control premium-select" id="reportMonthInput">
+            </div>
+            <div class="col-md-4">
+              <button class="btn premium-btn w-100" id="reportGenerateBtn"><i class="bi bi-graph-up me-2"></i>Generate Report</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-lg-6">
+            <div class="chart-card glass-panel">
+              <div class="chart-card-header"><h5>Monthly Attendance Trend</h5></div>
+              <div id="monthlyTrendChart" class="chart-container"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="chart-card glass-panel">
+              <div class="chart-card-header"><h5>Department Comparison</h5></div>
+              <div id="departmentChart" class="chart-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card glass-panel mt-3">
+          <div class="table-card-header">
+            <h5>Report Data</h5>
+          </div>
+          <div class="table-responsive">
+            <table class="premium-table" id="reportsTable">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Present Days</th>
+                  <th>Absent Days</th>
+                  <th>Late Days</th>
+                  <th>Leave Days</th>
+                  <th>Total Hours</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PROFILE VIEW ==================== -->
+      <section id="profileView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Profile</h2>
+            <p class="view-subtitle">Your account details</p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="profile-card glass-panel">
+              <div class="profile-avatar-wrap">
+                <img src="assets/images/ENGR_SHAHZAIB_AHMAD.jpeg" alt="Profile" id="profileAvatar" class="profile-avatar" onerror="this.onerror=null;this.src='assets/images/logo.jpeg'">
+                <button class="profile-avatar-edit-btn" id="profileAvatarEditBtn"><i class="bi bi-camera-fill"></i></button>
+              </div>
+              <h4 class="profile-name" id="profileName">Engr. Shahzaib Ahmad</h4>
+              <p class="profile-role" id="profileRole">Administrator</p>
+              <div class="profile-meta-list">
+                <div class="profile-meta-item"><i class="bi bi-envelope-fill"></i><span id="profileEmail">shahzaib@safesolutions.com</span></div>
+                <div class="profile-meta-item"><i class="bi bi-telephone-fill"></i><span id="profilePhone">+92 300 0000000</span></div>
+                <div class="profile-meta-item"><i class="bi bi-building-fill"></i><span id="profileDepartment">Management</span></div>
+                <div class="profile-meta-item"><i class="bi bi-calendar-check-fill"></i><span id="profileJoinDate">Jan 2023</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-8">
+            <div class="form-card glass-panel">
+              <h5 class="form-card-title">Edit Profile</h5>
+              <form id="profileForm">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="form-floating premium-field">
+                      <input type="text" class="form-control" id="profileFullNameInput" placeholder="Full Name">
+                      <label for="profileFullNameInput">Full Name</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-floating premium-field">
+                      <input type="email" class="form-control" id="profileEmailInput" placeholder="Email">
+                      <label for="profileEmailInput">Email</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-floating premium-field">
+                      <input type="text" class="form-control" id="profilePhoneInput" placeholder="Phone">
+                      <label for="profilePhoneInput">Phone</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-floating premium-field">
+                      <input type="text" class="form-control" id="profileDesignationInput" placeholder="Designation">
+                      <label for="profileDesignationInput">Designation</label>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn premium-btn mt-3" id="profileSaveBtn"><i class="bi bi-check-circle-fill me-2"></i>Save Changes</button>
+              </form>
+            </div>
+
+            <div class="form-card glass-panel mt-3">
+              <h5 class="form-card-title">Change Password</h5>
+              <form id="changePasswordForm">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <div class="form-floating premium-field">
+                      <input type="password" class="form-control" id="currentPasswordInput" placeholder="Current Password">
+                      <label for="currentPasswordInput">Current Password</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-floating premium-field">
+                      <input type="password" class="form-control" id="newPasswordInput" placeholder="New Password">
+                      <label for="newPasswordInput">New Password</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="form-floating premium-field">
+                      <input type="password" class="form-control" id="confirmPasswordInput" placeholder="Confirm Password">
+                      <label for="confirmPasswordInput">Confirm Password</label>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn premium-btn mt-3" id="updatePasswordBtn"><i class="bi bi-shield-lock-fill me-2"></i>Update Password</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SETTINGS VIEW ==================== -->
+      <section id="settingsView" class="view app-view d-none">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Settings</h2>
+            <p class="view-subtitle">Configure system preferences</p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="form-card glass-panel">
+              <h5 class="form-card-title">General Settings</h5>
+              <div class="settings-row">
+                <div>
+                  <span class="settings-row-title">Dark Mode</span>
+                  <span class="settings-row-desc">Toggle interface theme</span>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="darkModeToggle" checked>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <span class="settings-row-title">Email Notifications</span>
+                  <span class="settings-row-desc">Receive alerts via email</span>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="emailNotifToggle" checked>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div>
+                  <span class="settings-row-title">Push Notifications</span>
+                  <span class="settings-row-desc">Receive in-app alerts</span>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="pushNotifToggle" checked>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="form-card glass-panel">
+              <h5 class="form-card-title">Attendance Rules</h5>
+              <div class="form-floating premium-field mb-3">
+                <input type="time" class="form-control" id="officeStartTimeInput" value="09:00">
+                <label for="officeStartTimeInput">Office Start Time</label>
+              </div>
+              <div class="form-floating premium-field mb-3">
+                <input type="time" class="form-control" id="officeEndTimeInput" value="17:00">
+                <label for="officeEndTimeInput">Office End Time</label>
+              </div>
+              <div class="form-floating premium-field mb-3">
+                <input type="number" class="form-control" id="lateGraceMinutesInput" value="15">
+                <label for="lateGraceMinutesInput">Late Grace Period (minutes)</label>
+              </div>
+              <button type="button" class="btn premium-btn" id="saveSettingsBtn"><i class="bi bi-check-circle-fill me-2"></i>Save Settings</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <span>&copy; 2026 Safe Solutions Smart Attendance System. All rights reserved.</span>
+    </footer>
+  </div>
+</div>
+
+<!-- ==================== EMPLOYEE MODAL ==================== -->
+<div class="modal-backdrop-custom d-none" id="employeeModalBackdrop">
+  <div class="modal-panel glass-panel" id="employeeModal">
+    <div class="modal-panel-header">
+      <h5 id="employeeModalTitle">Add Employee</h5>
+      <button class="modal-close-btn" id="employeeModalCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body">
+      <form id="employeeForm">
+        <input type="hidden" id="employeeIdInput">
+        <div class="text-center mb-3">
+          <div class="employee-photo-upload-wrap">
+            <img src="assets/images/logo.jpeg" alt="Employee" id="employeePhotoPreview" class="employee-photo-preview" onerror="this.onerror=null;this.src='assets/images/logo.jpeg'">
+            <label for="employeePhotoInput" class="employee-photo-upload-btn"><i class="bi bi-camera-fill"></i></label>
+            <input type="file" id="employeePhotoInput" class="d-none" accept="image/*">
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="text" class="form-control" id="employeeNameInput" placeholder="Full Name">
+              <label for="employeeNameInput">Full Name</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="text" class="form-control" id="employeeCodeInput" placeholder="Employee Code">
+              <label for="employeeCodeInput">Employee Code</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="text" class="form-control" id="employeeDesignationInput" placeholder="Designation">
+              <label for="employeeDesignationInput">Designation</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <select class="form-select" id="employeeDepartmentInput">
+                <option value="">Select Department</option>
+              </select>
+              <label for="employeeDepartmentInput">Department</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="email" class="form-control" id="employeeEmailInput" placeholder="Email">
+              <label for="employeeEmailInput">Email</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="text" class="form-control" id="employeePhoneInput" placeholder="Phone">
+              <label for="employeePhoneInput">Phone</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="date" class="form-control" id="employeeJoinDateInput" placeholder="Join Date">
+              <label for="employeeJoinDateInput">Join Date</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <select class="form-select" id="employeeStatusInput">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <label for="employeeStatusInput">Status</label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-panel-footer">
+      <button class="btn outline-btn" id="employeeModalCancelBtn">Cancel</button>
+      <button class="btn premium-btn" id="saveEmployeeBtn">Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ATTENDANCE MODAL ==================== -->
+<div class="modal-backdrop-custom d-none" id="attendanceModalBackdrop">
+  <div class="modal-panel glass-panel" id="attendanceModal">
+    <div class="modal-panel-header">
+      <h5 id="attendanceModalTitle">Attendance Details</h5>
+      <button class="modal-close-btn" id="attendanceModalCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body">
+      <form id="attendanceForm">
+        <input type="hidden" id="attendanceIdInput">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <select class="form-select" id="attendanceEmployeeInput">
+                <option value="">Select Employee</option>
+              </select>
+              <label for="attendanceEmployeeInput">Employee</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <select class="form-select" id="attendanceTypeInput">
+                <option value="office">Office</option>
+                <option value="site">Site</option>
+              </select>
+              <label for="attendanceTypeInput">Type</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="date" class="form-control" id="attendanceDateInput">
+              <label for="attendanceDateInput">Date</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <select class="form-select" id="attendanceStatusInput">
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Late</option>
+                <option value="leave">Leave</option>
+              </select>
+              <label for="attendanceStatusInput">Status</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="time" class="form-control" id="attendanceCheckInInput">
+              <label for="attendanceCheckInInput">Check In</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating premium-field">
+              <input type="time" class="form-control" id="attendanceCheckOutInput">
+              <label for="attendanceCheckOutInput">Check Out</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-floating premium-field">
+              <textarea class="form-control" id="attendanceNotesInput" placeholder="Notes" style="height:90px"></textarea>
+              <label for="attendanceNotesInput">Notes</label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-panel-footer">
+      <button class="btn outline-btn" id="attendanceModalCancelBtn">Cancel</button>
+      <button class="btn premium-btn" id="saveAttendanceBtn">Save Attendance</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APPROVAL DETAIL MODAL ==================== -->
+<div class="modal-backdrop-custom d-none" id="approvalModalBackdrop">
+  <div class="modal-panel glass-panel" id="approvalModal">
+    <div class="modal-panel-header">
+      <h5 id="approvalModalTitle">Request Details</h5>
+      <button class="modal-close-btn" id="approvalModalCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body">
+      <div class="approval-detail-list" id="approvalDetailList"></div>
+      <div class="form-floating premium-field mt-3">
+        <textarea class="form-control" id="approvalRemarksInput" placeholder="Remarks" style="height:90px"></textarea>
+        <label for="approvalRemarksInput">Remarks</label>
+      </div>
+    </div>
+    <div class="modal-panel-footer">
+      <button class="btn reject-btn" id="rejectBtn"><i class="bi bi-x-circle-fill me-2"></i>Reject</button>
+      <button class="btn premium-btn" id="approveBtn"><i class="bi bi-check-circle-fill me-2"></i>Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DELETE CONFIRM MODAL ==================== -->
+<div class="modal-backdrop-custom d-none" id="deleteConfirmModalBackdrop">
+  <div class="modal-panel glass-panel modal-panel-sm" id="deleteConfirmModal">
+    <div class="modal-panel-header">
+      <h5>Confirm Delete</h5>
+      <button class="modal-close-btn" id="deleteConfirmCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body">
+      <p id="deleteConfirmText">Are you sure you want to delete this record?</p>
+    </div>
+    <div class="modal-panel-footer">
+      <button class="btn outline-btn" id="deleteCancelBtn">Cancel</button>
+      <button class="btn reject-btn" id="deleteConfirmBtn"><i class="bi bi-trash-fill me-2"></i>Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== QR SCAN MODAL ==================== -->
+<div class="modal-backdrop-custom d-none" id="qrScanModalBackdrop">
+  <div class="modal-panel glass-panel modal-panel-sm" id="qrScanModal">
+    <div class="modal-panel-header">
+      <h5 id="qrScanModalTitle"><i class="bi bi-qr-code-scan me-2"></i>Scan QR Code</h5>
+      <button class="modal-close-btn" id="qrScanModalCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body text-center">
+      <div id="qrReaderEl" class="qr-reader-box"></div>
+      <p class="qr-scan-hint"><i class="bi bi-shield-check me-1"></i>Align the QR code within the frame</p>
+      <div class="gps-check-row" id="qrGpsRow">
+        <i class="bi bi-geo-alt-fill"></i>
+        <span id="qrGpsStatusText">Waiting for GPS...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== QR SUCCESS ANIMATION OVERLAY ==================== -->
+<div class="qr-success-overlay d-none" id="qrSuccessOverlay">
+  <div class="qr-success-badge">
+    <svg viewBox="0 0 100 100" class="qr-success-svg">
+      <circle class="qr-success-circle" cx="50" cy="50" r="45"></circle>
+      <path class="qr-success-check" d="M28 52 L43 66 L74 34"></path>
+    </svg>
+    <span id="qrSuccessText">Checked In!</span>
+  </div>
+</div>
+
+<!-- ==================== LARGE QR VIEW MODAL ==================== -->
+<div class="modal-backdrop-custom d-none" id="qrLargeModalBackdrop">
+  <div class="modal-panel glass-panel modal-panel-sm" id="qrLargeModal">
+    <div class="modal-panel-header">
+      <h5><i class="bi bi-qr-code me-2"></i>Office QR — SAFE-SOLUTIONS-HQ-001</h5>
+      <button class="modal-close-btn" id="qrLargeModalCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body text-center">
+      <div id="officeQrCanvasLarge" class="qr-canvas-box qr-canvas-box-lg"></div>
+      <p class="qr-scan-hint mt-2">Permanent office identifier — do not share externally</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SITE CAPTURE MODAL (Selfie + Photo + Meter) ==================== -->
+<div class="modal-backdrop-custom d-none" id="siteCaptureModalBackdrop">
+  <div class="modal-panel glass-panel" id="siteCaptureModal">
+    <div class="modal-panel-header">
+      <h5 id="siteCaptureModalTitle"><i class="bi bi-camera-fill me-2"></i>Site Verification</h5>
+      <button class="modal-close-btn" id="siteCaptureModalCloseBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-panel-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="filter-label mb-2">Selfie Capture</label>
+          <div class="capture-box" id="selfieCaptureBox">
+            <video id="selfieVideoEl" class="capture-video d-none" autoplay playsinline></video>
+            <img id="selfiePreviewImg" class="capture-preview d-none" alt="Selfie preview">
+            <div class="capture-placeholder" id="selfiePlaceholder">
+              <i class="bi bi-person-bounding-box"></i>
+              <span>No selfie captured</span>
+            </div>
+          </div>
+          <div class="d-grid gap-2 mt-2">
+            <button class="btn outline-btn btn-sm-premium" id="selfieStartBtn"><i class="bi bi-camera-fill me-1"></i>Open Camera</button>
+            <button class="btn premium-btn btn-sm-premium d-none" id="selfieCaptureBtn"><i class="bi bi-camera me-1"></i>Capture</button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="filter-label mb-2">Site Photo</label>
+          <div class="capture-box" id="sitePhotoBox">
+            <img id="sitePhotoPreviewImg" class="capture-preview d-none" alt="Site photo preview">
+            <div class="capture-placeholder" id="sitePhotoPlaceholder">
+              <i class="bi bi-image"></i>
+              <span>No site photo uploaded</span>
+            </div>
+          </div>
+          <div class="d-grid gap-2 mt-2">
+            <label for="sitePhotoInput" class="btn outline-btn btn-sm-premium w-100"><i class="bi bi-upload me-1"></i>Upload Site Photo</label>
+            <input type="file" id="sitePhotoInput" class="d-none" accept="image/*" capture="environment">
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-1" id="siteVehicleRow">
+        <div class="col-md-6">
+          <div class="form-floating premium-field">
+            <select class="form-select" id="siteVehicleSelect">
+              <option value="">No Vehicle</option>
+              <option value="bike">Motorbike</option>
+              <option value="car">Company Car</option>
+              <option value="van">Delivery Van</option>
+            </select>
+            <label for="siteVehicleSelect">Vehicle</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating premium-field">
+            <input type="text" class="form-control" id="siteBikeNumberInput" placeholder="Bike / Vehicle Number">
+            <label for="siteBikeNumberInput">Vehicle Number</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating premium-field">
+            <input type="number" class="form-control" id="siteMeterReadingInput" placeholder="Meter Reading">
+            <label for="siteMeterReadingInput">Meter Reading (km)</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-floating premium-field">
+            <input type="text" class="form-control" id="siteRemarksInput" placeholder="Remarks">
+            <label for="siteRemarksInput">Remarks / Notes</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-panel-footer">
+      <button class="btn outline-btn" id="siteCaptureCancelBtn">Cancel</button>
+      <button class="btn premium-btn" id="siteCaptureSubmitBtn"><i class="bi bi-check-circle-fill me-2"></i>Submit for Approval</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SKELETON LOADER TEMPLATE (hidden) ==================== -->
+<div class="d-none" id="skeletonTemplates">
+  <div class="skeleton-row" id="skeletonRowTemplate">
+    <div class="skeleton-block"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
