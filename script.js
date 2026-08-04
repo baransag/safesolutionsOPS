@@ -1221,6 +1221,57 @@ const AttendanceModule = {
     return { verified, distance, pos };
   },
 
+  /* ---------- QR SCANNER (html5-qrcode) ---------- */
+  html5QrScanner: null,
+
+  initQRScanner(elementId, onScanSuccess) {
+    // Prevent duplicate camera instances if a scanner is already running
+    this.stopQRScanner();
+
+    const el = document.getElementById(elementId);
+    if (el) el.innerHTML = "";
+
+    if (typeof Html5Qrcode === "undefined") {
+      Utils.toast("error", "QR scanner library not loaded.");
+      return;
+    }
+
+    this.html5QrScanner = new Html5Qrcode(elementId);
+
+    const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+    this.html5QrScanner
+      .start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          // Stop immediately so we don't fire multiple times / leave camera open
+          this.stopQRScanner();
+          onScanSuccess(decodedText);
+        },
+        () => {
+          // per-frame scan failure callback - safe to ignore, fires continuously while searching
+        }
+      )
+      .catch((err) => {
+        console.error("QR scanner start failed", err);
+        Utils.toast("error", "Unable to start camera for QR scan.");
+      });
+  },
+
+  stopQRScanner() {
+    if (this.html5QrScanner) {
+      const scanner = this.html5QrScanner;
+      this.html5QrScanner = null;
+      scanner
+        .stop()
+        .then(() => scanner.clear())
+        .catch(() => {
+          try { scanner.clear(); } catch (e) {}
+        });
+    }
+  },
+
   /* ---------- QR SCAN FLOW (Office: no selfie / Site: selfie + photo) ---------- */
   async beginQrFlow(type, action) {
     const session = Auth.currentSession();
