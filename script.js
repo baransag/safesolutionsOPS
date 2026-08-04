@@ -1332,30 +1332,68 @@ async startQRScanner() {
   });
 
 }
-    this.initQRScanner("qrReaderEl", (decodedText) => this.onQrScanned(decodedText));
-  },
+    initQRScanner(elementId, callback) {
 
-  closeQrScanModal() {
-    this.stopQRScanner();
-    Modals.close("qrScanModalBackdrop");
-  },
+    const el = document.getElementById(elementId);
 
-  async onQrScanned(decodedText) {
-    this.stopQRScanner();
-    Modals.close("qrScanModalBackdrop");
-
-    let payload;
-    try { payload = JSON.parse(decodedText); } catch (e) { payload = { code: decodedText }; }
-    const scannedCode = (payload && (payload.code || payload.qr)) || decodedText;
-
-    const ctx = this.pendingContext || {};
-
-    if (ctx.type === "office") {
-      const verify = await API.verifyQr({ code: scannedCode, type: "office", action: ctx.action });
-      if (!verify.success) {
-        Utils.toast("error", verify.message || "QR verification failed.");
+    if (!el) {
+        console.error("QR element not found:", elementId);
         return;
-      }
+    }
+
+    // stop old scanner if running
+    if (this.qrScanner) {
+        this.stopQRScanner();
+    }
+
+    this.qrScanner = new Html5Qrcode(elementId);
+
+    this.qrScanner.start(
+        {
+            facingMode: "environment"
+        },
+        {
+            fps: 10,
+            qrbox: {
+                width: 250,
+                height: 250
+            }
+        },
+        (decodedText) => {
+
+            console.log("QR Found:", decodedText);
+
+            if (callback) {
+                callback(decodedText);
+            }
+
+        },
+        (errorMessage) => {
+            // scanning errors ignore
+        }
+    )
+    .catch(err => {
+        console.error("QR Camera Error:", err);
+    });
+},
+
+
+stopQRScanner() {
+
+    if (this.qrScanner) {
+
+        this.qrScanner.stop()
+        .then(() => {
+            this.qrScanner.clear();
+            this.qrScanner = null;
+        })
+        .catch(err => {
+            console.log("Scanner stop error", err);
+            this.qrScanner = null;
+        });
+
+    }
+  }
       // No selfie/photo — straight to marking attendance
       await this.markAttendance("office", ctx.action, { gps: ctx.gpsResult });
       this.playSuccessAnimation(ctx.action === "checkIn" ? "Checked In!" : "Checked Out!");
