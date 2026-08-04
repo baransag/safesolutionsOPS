@@ -1200,26 +1200,38 @@ const AttendanceModule = {
   },
 
   /* ---------- QR SCANNER ---------- */
-  initQRScanner(elementId, onDecode) {
-    if (typeof Html5Qrcode === "undefined") { Utils.toast("error", "QR library not loaded."); return; }
-    if (this.qrScanner) this.stopQRScanner();
-    this.qrScanner = new Html5Qrcode(elementId);
-    Html5Qrcode.getCameras().then((devices) => {
-      if (!devices || devices.length === 0) { Utils.toast("error", "No camera found."); return; }
-      this.qrScanner.start(
-        devices[0].id, { fps: 10, qrbox: 250 },
-        (decodedText) => onDecode(decodedText),
-        () => {}
-      ).catch(() => Utils.toast("error", "Unable to start camera."));
-    }).catch(() => Utils.toast("error", "Camera permission denied."));
-  },
-  stopQRScanner() {
-    if (this.qrScanner) {
-      this.qrScanner.stop().then(() => this.qrScanner.clear()).catch(() => {});
-      this.qrScanner = null;
-    }
-  },
+  Html5Qrcode.getCameras().then((devices) => {
+  if (!devices || devices.length === 0) {
+    Utils.toast("error", "No camera found.");
+    return;
+  }
 
+  // Prefer back camera
+  let selectedCamera = devices.find(cam =>
+    /back|rear|environment/i.test(cam.label)
+  );
+
+  // Agar back camera detect na ho to last camera use karo
+  if (!selectedCamera) {
+    selectedCamera = devices[devices.length - 1];
+  }
+
+  this.qrScanner.start(
+    selectedCamera.id,
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    (decodedText) => onDecode(decodedText),
+    () => {}
+  ).catch((err) => {
+    console.error(err);
+    Utils.toast("error", "Unable to start camera.");
+  });
+
+}).catch(() => {
+  Utils.toast("error", "Camera permission denied.");
+});
   /* ---------- GPS VERIFICATION ---------- */
   pendingContext: null, // { type, action, gps, distance }
 
