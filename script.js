@@ -1186,65 +1186,7 @@ const AttendanceModule = {
     }
   },
 
-async handleReject() {
-  if (!this.currentApprovalId) return;
 
-  const remarks = document.getElementById("approvalRemarksInput")?.value || "Rejected";
-
-  const result = await API.rejectAttendance(
-    this.currentApprovalId,
-    remarks
-  );
-
-  if (result.success) {
-    Utils.toast("success", "Attendance rejected.");
-    Modals.close("approvalModalBackdrop");
-    await this.refreshApprovalView();
-    await this.refreshHistoryView();
-    Dashboard.refresh();
-  }
-},
-
-/* ---------- QR SCANNER ---------- */
-async startQRScanner() {
-
-  try {
-
-    const devices = await Html5Qrcode.getCameras();
-
-    if (!devices || devices.length === 0) {
-      Utils.toast("error", "No camera found.");
-      return;
-    }
-
-    let selectedCamera = devices.find(cam =>
-      /back|rear|environment/i.test(cam.label)
-    );
-
-    if (!selectedCamera) {
-      selectedCamera = devices[devices.length - 1];
-    }
-
-    await this.qrScanner.start(
-      selectedCamera.id,
-      {
-        fps: 10,
-        qrbox: 250
-      },
-      (decodedText) => {
-        this.onDecode(decodedText);
-      },
-      () => {}
-    );
-
-  } catch (err) {
-
-    console.error(err);
-    Utils.toast("error", "Unable to start camera.");
-
-  }
-
-},
   /* ---------- GPS VERIFICATION ---------- */
   pendingContext: null, // { type, action, gps, distance }
 
@@ -1303,97 +1245,36 @@ async startQRScanner() {
     if (gpsRow) gpsRow.className = "gps-check-row";
     if (gpsText) gpsText.textContent = "Verifying GPS...";
 
-    if (type === "office") {
-  const result = {
-    verified: true,
-    latitude: null,
-    longitude: null,
-    accuracy: null
-  };
-
-  if (gpsText) gpsText.textContent = "Location Not Required";
-  if (gpsRow) gpsRow.classList.add("verified");
-
-  this.pendingContext.gpsResult = result;
-
-} else {
-
-  this.verifyGps("site").then((result) => {
-
-    if (gpsText) {
-      gpsText.textContent = result.verified 
-        ? "Location Verified" 
-        : "Location could not be verified";
-    }
-    if (gpsRow) {
-      gpsRow.classList.add(result.verified ? "verified" : "failed");
-    }
-    this.pendingContext.gpsResult = result;
-  });
-
-}
-    initQRScanner(elementId, callback) {
-
-    const el = document.getElementById(elementId);
-
-    if (!el) {
-        console.error("QR element not found:", elementId);
-        return;
-    }
-
-    // stop old scanner if running
-    if (this.qrScanner) {
-        this.stopQRScanner();
-    }
-
-    this.qrScanner = new Html5Qrcode(elementId);
-
-    this.qrScanner.start(
-        {
-            facingMode: "environment"
-        },
-        {
-            fps: 10,
-            qrbox: {
-                width: 250,
-                height: 250
-            }
-        },
-        (decodedText) => {
-
-            console.log("QR Found:", decodedText);
-
-            if (callback) {
-                callback(decodedText);
-            }
-
-        },
-        (errorMessage) => {
-            // scanning errors ignore
-        }
-    )
-    .catch(err => {
-        console.error("QR Camera Error:", err);
+    this.verifyGps(type === "office" ? "office" : "site").then((result) => {
+      if (gpsText) gpsText.textContent = result.verified ? "Location Verified" : "Location could not be verified";
+      if (gpsRow) gpsRow.classList.add(result.verified ? "verified" : "failed");
+      this.pendingContext.gpsResult = result;
     });
-},
 
+    this.initQRScanner("qrReaderEl", (decodedText) => this.onQrScanned(decodedText));
+  },
 
-stopQRScanner() {
+  closeQrScanModal() {
+    this.stopQRScanner();
+    Modals.close("qrScanModalBackdrop");
+  },
 
-    if (this.qrScanner) {
+  async onQrScanned(decodedText) {
+    this.stopQRScanner();
+    Modals.close("qrScanModalBackdrop");
 
-        this.qrScanner.stop()
-        .then(() => {
-            this.qrScanner.clear();
-            this.qrScanner = null;
-        })
-        .catch(err => {
-            console.log("Scanner stop error", err);
-            this.qrScanner = null;
-        });
+    let payload;
+    try { payload = JSON.parse(decodedText); } catch (e) { payload = { code: decodedText }; }
+    const scannedCode = (payload && (payload.code || payload.qr)) || decodedText;
 
-    }
-  }
+    const ctx = this.pendingContext || {};
+
+    if (ctx.type === "office") {
+      const verify = await API.verifyQr({ code: scannedCode, type: "office", action: ctx.action });
+      if (!verify.success) {
+        Utils.toast("error", verify.message || "QR verification failed.");
+        return;
+      }
       // No selfie/photo — straight to marking attendance
       await this.markAttendance("office", ctx.action, { gps: ctx.gpsResult });
       this.playSuccessAnimation(ctx.action === "checkIn" ? "Checked In!" : "Checked Out!");
