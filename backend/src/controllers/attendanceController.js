@@ -78,20 +78,31 @@ const checkIn = asyncHandler(async (req, res) => {
   if (existing && existing.check_in && !existing.check_out) {
     throw new ApiError(409, "Already checked in for this type today. Check out first.");
   }
+ // GPS geofence check
+// Office QR attendance does not require GPS
+// Site attendance will still verify location
 
-  // GPS geofence check for office check-ins
-  let withinGeofence = null;
-  if (type === "office" && latitude != null && longitude != null) {
-    const settings = await SettingsModel.get();
-    if (settings) {
-      const dist = distanceMeters(
-        parseFloat(latitude), parseFloat(longitude),
-        settings.office_lat, settings.office_lng
-      );
-      withinGeofence = dist <= settings.office_radius_meters;
-    }
+let withinGeofence = null;
+
+if (type === "site" && latitude != null && longitude != null) {
+  const settings = await SettingsModel.get();
+
+  if (settings) {
+    const dist = distanceMeters(
+      parseFloat(latitude),
+      parseFloat(longitude),
+      settings.office_lat,
+      settings.office_lng
+    );
+
+    withinGeofence = dist <= settings.office_radius_meters;
   }
+}
 
+// Office QR = trusted location
+if (type === "office") {
+  withinGeofence = true;
+}
   // Store the relative path so /uploads/<path> resolves via the static server.
   let selfiePath = req.file ? `selfies/${req.file.filename}` : null;
   if (!selfiePath && req.body.selfie) {
