@@ -1303,12 +1303,35 @@ async startQRScanner() {
     if (gpsRow) gpsRow.className = "gps-check-row";
     if (gpsText) gpsText.textContent = "Verifying GPS...";
 
-    this.verifyGps(type === "office" ? "office" : "site").then((result) => {
-      if (gpsText) gpsText.textContent = result.verified ? "Location Verified" : "Location could not be verified";
-      if (gpsRow) gpsRow.classList.add(result.verified ? "verified" : "failed");
-      this.pendingContext.gpsResult = result;
-    });
+    if (type === "office") {
+  const result = {
+    verified: true,
+    latitude: null,
+    longitude: null,
+    accuracy: null
+  };
 
+  if (gpsText) gpsText.textContent = "Location Not Required";
+  if (gpsRow) gpsRow.classList.add("verified");
+
+  this.pendingContext.gpsResult = result;
+
+} else {
+
+  this.verifyGps("site").then((result) => {
+
+    if (gpsText) {
+      gpsText.textContent = result.verified 
+        ? "Location Verified" 
+        : "Location could not be verified";
+    }
+    if (gpsRow) {
+      gpsRow.classList.add(result.verified ? "verified" : "failed");
+    }
+    this.pendingContext.gpsResult = result;
+  });
+
+}
     this.initQRScanner("qrReaderEl", (decodedText) => this.onQrScanned(decodedText));
   },
 
