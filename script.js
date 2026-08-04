@@ -1186,52 +1186,65 @@ const AttendanceModule = {
     }
   },
 
-  async handleReject() {
-    if (!this.currentApprovalId) return;
-    const remarks = document.getElementById("approvalRemarksInput")?.value || "Rejected";
-    const result = await API.rejectAttendance(this.currentApprovalId, remarks);
-    if (result.success) {
-      Utils.toast("success", "Attendance rejected.");
-      Modals.close("approvalModalBackdrop");
-      await this.refreshApprovalView();
-      await this.refreshHistoryView();
-      Dashboard.refresh();
-    }
-  },
+async handleReject() {
+  if (!this.currentApprovalId) return;
 
-  /* ---------- QR SCANNER ---------- */
-  Html5Qrcode.getCameras().then((devices) => {
-  if (!devices || devices.length === 0) {
-    Utils.toast("error", "No camera found.");
-    return;
-  }
+  const remarks = document.getElementById("approvalRemarksInput")?.value || "Rejected";
 
-  // Prefer back camera
-  let selectedCamera = devices.find(cam =>
-    /back|rear|environment/i.test(cam.label)
+  const result = await API.rejectAttendance(
+    this.currentApprovalId,
+    remarks
   );
 
-  // Agar back camera detect na ho to last camera use karo
-  if (!selectedCamera) {
-    selectedCamera = devices[devices.length - 1];
+  if (result.success) {
+    Utils.toast("success", "Attendance rejected.");
+    Modals.close("approvalModalBackdrop");
+    await this.refreshApprovalView();
+    await this.refreshHistoryView();
+    Dashboard.refresh();
   }
+},
 
-  this.qrScanner.start(
-    selectedCamera.id,
-    {
-      fps: 10,
-      qrbox: 250
-    },
-    (decodedText) => onDecode(decodedText),
-    () => {}
-  ).catch((err) => {
+/* ---------- QR SCANNER ---------- */
+async startQRScanner() {
+
+  try {
+
+    const devices = await Html5Qrcode.getCameras();
+
+    if (!devices || devices.length === 0) {
+      Utils.toast("error", "No camera found.");
+      return;
+    }
+
+    let selectedCamera = devices.find(cam =>
+      /back|rear|environment/i.test(cam.label)
+    );
+
+    if (!selectedCamera) {
+      selectedCamera = devices[devices.length - 1];
+    }
+
+    await this.qrScanner.start(
+      selectedCamera.id,
+      {
+        fps: 10,
+        qrbox: 250
+      },
+      (decodedText) => {
+        this.onDecode(decodedText);
+      },
+      () => {}
+    );
+
+  } catch (err) {
+
     console.error(err);
     Utils.toast("error", "Unable to start camera.");
-  });
 
-}).catch(() => {
-  Utils.toast("error", "Camera permission denied.");
-});
+  }
+
+},
   /* ---------- GPS VERIFICATION ---------- */
   pendingContext: null, // { type, action, gps, distance }
 
