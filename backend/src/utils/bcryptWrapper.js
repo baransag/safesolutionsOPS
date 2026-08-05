@@ -1,8 +1,2 @@
-let bcrypt;
-try {
-  bcrypt = require("bcryptjs");
-} catch (e) {
-  bcrypt = require("bcrypt");
-}
-
+const bcrypt = require("bcryptjs");
 module.exports = bcrypt;
