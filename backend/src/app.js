@@ -10,6 +10,7 @@ const routes = require("./routes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
+app.set("trust proxy", 1);
 
 // Security headers
 app.use(
@@ -92,7 +93,8 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { trustProxy: false }
 });
 
 

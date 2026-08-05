@@ -10,33 +10,32 @@ const env           = require("../config/env");
 
 // POST /api/auth/login
 const login = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
-
-  console.log("========== LOGIN REQUEST ==========");
-  console.log("Request Body:", req.body);
+  let body = req.body || {};
+  if (typeof body === "string") {
+    try { body = JSON.parse(body); } catch (e) {}
+  }
+  const username = (body.username || "").trim();
+  const password = body.password || "";
 
   if (!username || !password) {
     throw new ApiError(400, "Username and password are required.");
   }
 
-  const user = await UserModel.findByUsername(username);
-
-  console.log("Database User:", user);
-
-  if (!user) {
-    console.log("❌ User not found");
-    throw new ApiError(401, "User not found.");
+  let user;
+  try {
+    user = await UserModel.findByUsername(username);
+  } catch (err) {
+    console.error("Database lookup error during login:", err);
+    throw new ApiError(500, `Database error: ${err.message}`);
   }
 
-  console.log("Stored Password Hash:", user.password_hash);
+  if (!user) {
+    throw new ApiError(401, "Invalid username or password.");
+  }
 
   const match = await bcrypt.compare(password, user.password_hash);
-
-  console.log("Password Match:", match);
-
   if (!match) {
-    console.log("❌ Incorrect password");
-    throw new ApiError(401, "Incorrect password.");
+    throw new ApiError(401, "Invalid username or password.");
   }
 
   const employee = await EmployeeModel.findById(user.employee_id);
