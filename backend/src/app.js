@@ -101,6 +101,7 @@ app.use("/api/auth/forgot-password", authLimiter);
 
 
 app.use("/api", routes);
+app.use(routes);
 
 // Uploaded images
 app.use(
