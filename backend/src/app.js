@@ -100,6 +100,8 @@ app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
 
 
+app.use("/api", routes);
+
 // Uploaded images
 app.use(
   "/uploads",
@@ -108,12 +110,15 @@ app.use(
   )
 );
 
+// Serve frontend static assets (Index.html, script.js, style.css, assets)
+const rootDir = path.join(__dirname, "..", "..");
+app.use(express.static(rootDir));
 
-app.use("/api", routes);
-
+app.get(["/", "/index.html", "/Index.html"], (req, res) => {
+  res.sendFile(path.join(rootDir, "Index.html"));
+});
 
 app.use(notFound);
 app.use(errorHandler);
-
 
 module.exports = app;
