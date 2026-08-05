@@ -9,7 +9,7 @@
 
    Run with: npm run seed
    ========================================================================= */
-const bcrypt  = require("bcrypt");
+const bcrypt  = require("../utils/bcryptWrapper");
 const fs      = require("fs");
 const path    = require("path");
 const QRCode  = require("qrcode");

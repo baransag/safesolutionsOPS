@@ -1,4 +1,4 @@
-const bcrypt        = require("bcrypt");
+const bcrypt        = require("../utils/bcryptWrapper");
 const crypto        = require("crypto");
 const UserModel     = require("../models/userModel");
 const EmployeeModel = require("../models/employeeModel");
