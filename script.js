@@ -6,23 +6,33 @@
 /* =========================================================================
    1. CONFIGURATION
    ========================================================================= */
+const getBaseUrl = () => {
+  if (window.ENV_API_BASE) return window.ENV_API_BASE.replace(/\/api\/?$/, "");
+  const origin = window.location.origin;
+  if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+    if (window.location.port === "5000") return origin;
+    return "http://localhost:5000";
+  }
+  return origin;
+};
+
 const CONFIG = {
   APP_NAME: "SAFE SOLUTIONS SMART ATTENDANCE SYSTEM",
   DEFAULT_PASSWORD: "Safe@123",
   ROLES: { EMPLOYEE: "Employee", MANAGER: "Manager", CONTROLLER: "Controller", BOSS: "Boss" },
   OFFICE_LOCATION: { lat: 31.5497, lng: 74.3436, radiusMeters: 500 },
   OFFICE_QR_CODE: "SAFE-SOLUTIONS-HQ-001",
-  API_BASE: "https://utmost-shadily-staple.ngrok-free.dev/api",
-UPLOADS_BASE: "https://utmost-shadily-staple.ngrok-free.dev/uploads",
-EMPLOYEES_UPLOADS_PATH: "https://utmost-shadily-staple.ngrok-free.dev/uploads/employees/",
-SELFIES_UPLOADS_PATH: "https://utmost-shadily-staple.ngrok-free.dev/uploads/selfies/",
-SITE_UPLOADS_PATH: "https://utmost-shadily-staple.ngrok-free.dev/uploads/site/",
+  get API_BASE() { return getBaseUrl() + "/api"; },
+  get UPLOADS_BASE() { return getBaseUrl() + "/uploads"; },
+  get EMPLOYEES_UPLOADS_PATH() { return getBaseUrl() + "/uploads/employees/"; },
+  get SELFIES_UPLOADS_PATH() { return getBaseUrl() + "/uploads/selfies/"; },
+  get SITE_UPLOADS_PATH() { return getBaseUrl() + "/uploads/site/"; },
   DB_NAME: "SafeSolutionsDB",
   DB_VERSION: 1,
   STORE_ATTENDANCE: "attendance",
   IMAGES_PATH: "assets/images/",
   LOGO: "logo.jpeg",
-  DEFAULT_AVATAR: "default-avatar.jpeg",
+  DEFAULT_AVATAR: "logo.jpeg",
   HERO_IMAGES: ["hero-1.jpeg", "hero-2.jpeg", "hero-3.jpeg", "hero-4.jpeg", "hero-5.jpeg"],
   PAGE_SIZE: 8
 };
@@ -52,24 +62,29 @@ const Utils = {
     }
     return h.toString(36) + str.length.toString(36);
   },
+  resolveUrl(fileName, defaultSubfolder = "employees") {
+    if (!fileName) return "assets/images/logo.jpeg";
+    if (fileName.startsWith("data:image/") || /^https?:\/\//i.test(fileName)) return fileName;
+    if (fileName.startsWith("assets/")) return fileName;
+    if (fileName === "logo.jpeg" || fileName === "default-avatar.jpeg") return "assets/images/logo.jpeg";
+    if (fileName.startsWith("uploads/")) return getBaseUrl() + "/" + fileName;
+    if (fileName.startsWith("employees/") || fileName.startsWith("selfies/") || fileName.startsWith("site/")) {
+      return CONFIG.UPLOADS_BASE + "/" + fileName;
+    }
+    return getBaseUrl() + "/uploads/" + defaultSubfolder + "/" + fileName;
+  },
   imgPath(fileName) {
-    if (!fileName) return CONFIG.EMPLOYEES_UPLOADS_PATH + CONFIG.DEFAULT_AVATAR;
-    if (/^https?:\/\//i.test(fileName)) return fileName;
-    return CONFIG.EMPLOYEES_UPLOADS_PATH + fileName;
+    return this.resolveUrl(fileName, "employees");
   },
   selfiePath(fileName) {
-    if (!fileName) return CONFIG.EMPLOYEES_UPLOADS_PATH + CONFIG.DEFAULT_AVATAR;
-    if (/^https?:\/\//i.test(fileName)) return fileName;
-    return CONFIG.SELFIES_UPLOADS_PATH + fileName;
+    return this.resolveUrl(fileName, "selfies");
   },
   sitePhotoPath(fileName) {
-    if (!fileName) return CONFIG.EMPLOYEES_UPLOADS_PATH + CONFIG.DEFAULT_AVATAR;
-    if (/^https?:\/\//i.test(fileName)) return fileName;
-    return CONFIG.SITE_UPLOADS_PATH + fileName;
+    return this.resolveUrl(fileName, "site");
   },
   onImgError(imgEl) {
     imgEl.onerror = null; // prevent infinite loop
-    imgEl.src = CONFIG.EMPLOYEES_UPLOADS_PATH + CONFIG.DEFAULT_AVATAR;
+    imgEl.src = "assets/images/logo.jpeg";
   },
   escapeHtml(str) {
     if (str === null || str === undefined) return "";
@@ -1223,9 +1238,10 @@ const AttendanceModule = {
 
   /* ---------- QR SCANNER (html5-qrcode) ---------- */
   html5QrScanner: null,
+  availableCameras: [],
+  activeCameraIndex: 0,
 
-  initQRScanner(elementId, onScanSuccess) {
-    // Prevent duplicate camera instances if a scanner is already running
+  async initQRScanner(elementId, onScanSuccess) {
     this.stopQRScanner();
 
     const el = document.getElementById(elementId);
@@ -1236,27 +1252,44 @@ const AttendanceModule = {
       return;
     }
 
+    try {
+      this.availableCameras = await Html5Qrcode.getCameras();
+    } catch (e) {
+      this.availableCameras = [];
+    }
+
     this.html5QrScanner = new Html5Qrcode(elementId);
+    const config = { fps: 15, qrbox: { width: 230, height: 230 }, aspectRatio: 1.0 };
 
-    const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+    let cameraConstraint = { facingMode: "environment" };
+    if (this.availableCameras.length > 0) {
+      // Find back camera by label or fallback
+      const backCamIndex = this.availableCameras.findIndex((c) =>
+        /back|rear|environment|0/i.test(c.label)
+      );
+      this.activeCameraIndex = backCamIndex >= 0 ? backCamIndex : 0;
+      cameraConstraint = this.availableCameras[this.activeCameraIndex].id;
+    }
 
-    this.html5QrScanner
-      .start(
-        { facingMode: "environment" },
+    const startWithConstraint = (constraint) => {
+      return this.html5QrScanner.start(
+        constraint,
         config,
         (decodedText) => {
-          // Stop immediately so we don't fire multiple times / leave camera open
           this.stopQRScanner();
           onScanSuccess(decodedText);
         },
-        () => {
-          // per-frame scan failure callback - safe to ignore, fires continuously while searching
-        }
-      )
-      .catch((err) => {
-        console.error("QR scanner start failed", err);
-        Utils.toast("error", "Unable to start camera for QR scan.");
+        () => {}
+      );
+    };
+
+    startWithConstraint(cameraConstraint).catch((err) => {
+      console.warn("Camera start failed with primary constraint, attempting fallback", err);
+      startWithConstraint({ facingMode: "environment" }).catch((fallbackErr) => {
+        console.error("QR scanner start failed completely", fallbackErr);
+        Utils.toast("error", "Unable to start back camera for QR scan.");
       });
+    });
   },
 
   stopQRScanner() {
@@ -1388,17 +1421,26 @@ const AttendanceModule = {
 
   async startSelfieCamera() {
     try {
-      this.selfieStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      this.stopSelfieCamera();
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      } catch (err) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      this.selfieStream = stream;
       const video = document.getElementById("selfieVideoEl");
       const placeholder = document.getElementById("selfiePlaceholder");
       if (video) {
         video.srcObject = this.selfieStream;
         video.classList.remove("d-none");
+        video.play();
       }
       if (placeholder) placeholder.classList.add("d-none");
       document.getElementById("selfieStartBtn")?.classList.add("d-none");
       document.getElementById("selfieCaptureBtn")?.classList.remove("d-none");
     } catch (e) {
+      console.error("Selfie camera start failed", e);
       Utils.toast("error", "Camera permission denied or unavailable.");
     }
   },
@@ -1414,9 +1456,10 @@ const AttendanceModule = {
     const video = document.getElementById("selfieVideoEl");
     if (!video || !video.videoWidth) { Utils.toast("error", "Camera not ready."); return; }
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     this.selfieDataUrl = canvas.toDataURL("image/jpeg", 0.85);
 
     const preview = document.getElementById("selfiePreviewImg");
@@ -1596,12 +1639,42 @@ const ReportsModule = {
     const pdfBtn = document.getElementById("reportExportPdfBtn");
     if (pdfBtn && !pdfBtn.dataset.bound) {
       pdfBtn.dataset.bound = "true";
-      pdfBtn.addEventListener("click", () => Utils.toast("info", "PDF export requires backend integration."));
+      pdfBtn.addEventListener("click", () => this.downloadReportFile("/reports/export/pdf", "attendance_report.pdf"));
     }
     const excelBtn = document.getElementById("reportExportExcelBtn");
     if (excelBtn && !excelBtn.dataset.bound) {
       excelBtn.dataset.bound = "true";
-      excelBtn.addEventListener("click", () => this.exportExcelCsv());
+      excelBtn.addEventListener("click", () => this.downloadReportFile("/reports/export/excel", "attendance_report.xlsx"));
+    }
+  },
+
+  async downloadReportFile(endpoint, filename) {
+    const monthInput = document.getElementById("reportMonthInput");
+    const params = new URLSearchParams();
+    if (monthInput && monthInput.value) {
+      params.append("fromDate", monthInput.value + "-01");
+      const [yr, mo] = monthInput.value.split("-").map(Number);
+      const lastDay = new Date(yr, mo, 0).getDate();
+      params.append("toDate", monthInput.value + "-" + String(lastDay).padStart(2, "0"));
+    }
+    const token = Storage.getToken();
+    const headers = {};
+    if (token) headers["Authorization"] = "Bearer " + token;
+
+    try {
+      const res = await fetch(CONFIG.API_BASE + endpoint + (params.toString() ? "?" + params.toString() : ""), { headers });
+      if (!res.ok) throw new Error("Failed to download file");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      Utils.toast("success", "Export downloaded.");
+    } catch (e) {
+      console.error("Export error", e);
+      Utils.toast("error", "Export failed.");
     }
   },
 

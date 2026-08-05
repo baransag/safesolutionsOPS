@@ -13,6 +13,7 @@ module.exports = {
   PORT: parseInt(process.env.PORT || "5000", 10),
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || "http://localhost:3000",
 
+  DATABASE_URL: process.env.DATABASE_URL || process.env.POSTGRES_URL || null,
   DB_HOST:     process.env.DB_HOST     || "localhost",
   DB_PORT:     parseInt(process.env.DB_PORT || "5432", 10),
   DB_NAME:     process.env.DB_NAME     || "safe_solutions_ops",

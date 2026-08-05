@@ -43,7 +43,13 @@ app.use(
       }
 
       // Allow frontend domains
-      if (allowedOrigins.includes(origin)) {
+      if (
+        allowedOrigins.includes(origin) ||
+        /\.netlify\.app$/.test(origin) ||
+        /\.vercel\.app$/.test(origin) ||
+        /\.onrender\.com$/.test(origin) ||
+        process.env.ALLOW_ALL_CORS === "true"
+      ) {
         return callback(null, true);
       }
 
