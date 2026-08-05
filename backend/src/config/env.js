@@ -13,7 +13,7 @@ module.exports = {
   PORT: parseInt(process.env.PORT || "5000", 10),
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || "http://localhost:3000",
 
-  DATABASE_URL: process.env.DATABASE_URL || process.env.POSTGRES_URL || null,
+  DATABASE_URL: process.env.DATABASE_URL || process.env.POSTGRES_URL || "postgresql://neondb_owner:npg_RVz7tABGfQ6w@ep-flat-truth-ayunj5tc-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require",
   DB_HOST:     process.env.DB_HOST     || "localhost",
   DB_PORT:     parseInt(process.env.DB_PORT || "5432", 10),
   DB_NAME:     process.env.DB_NAME     || "safe_solutions_ops",
